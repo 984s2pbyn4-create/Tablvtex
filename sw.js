@@ -1,5 +1,5 @@
 /* Versioned app-shell cache, scoped to its GitHub Pages repository. */
-const CACHE='textforma-shell-v1.0.0';
+const CACHE='textforma-shell-v1.1.0';
 const ASSETS=['./','./index.html','./styles.css','./zip.js','./excel.js','./docx.js','./db.js','./engine.js','./worker.js','./app.js','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./icon.svg'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('textforma-shell-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});

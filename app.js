@@ -80,11 +80,20 @@
    $('emptySeparator').value=c.branches.emptyComment.separator;$('filledSeparator').value=c.branches.filledComment.separator;
    $('emptySort').value=c.branches.emptyComment.sort;$('filledSort').value=c.branches.filledComment.sort;
    $('stripPrefix').value=c.branches.filledComment.stripPrefix;
+   $('filledGroupCommentOnly').checked=!c.branches.filledComment.groupBy.includes('square');
+   updateFilledGroupHint();
    $('branchFirst').value=c.branchOrder[0];$('targetPrefix').value=c.output.targetPrefix;
    $('valueSeparator').value=c.output.valueSeparator;$('branchSeparator').value=c.output.branchSeparator;
    $('groupSeparator').value=({'\n\n':'double','\n':'single','; ':'semicolon'}[c.output.groupSeparator]||'double');$('templateName').value=c.name;
    $('headerRowInput').value=c.headerRow;$('persistSession').checked=state.persistSession;
    drawMapping();drawFilters();updateGroupsFromData();drawSource();
+ }
+ function updateFilledGroupHint(){
+   const merged=!state.config.branches.filledComment.groupBy.includes('square');
+   const mask=state.config.branches.filledComment.template;
+   $('filledGroupHint').textContent=merged
+      ? (mask.includes('{square}')?'Объединение включено. В маске используется {square}, поэтому будет выведен только первый квадрат. Замените его на {squares}.':'Группировка только по очищенному комментарию: уникальные квадраты собираются в {squares}, идентификаторы — в {targetIds}.')
+      : 'Группировка по очищенному комментарию и квадрату: каждая пара формирует отдельный элемент.';
  }
  function syncFile(file,book){
    state.workbook={...book,fileName:file?.name||book.fileName||'Локальная таблица'};
@@ -199,9 +208,20 @@
         if(path[0]==='branches')state.config.branches[path[1]][path[3]]=val;
         else if(path[0])state.config[path[0]][path[1]]=val;
         else state.config[path[1]]=val;
+        if(id==='filledMask')updateFilledGroupHint();
         changed();
       });
    }
+   $('filledGroupCommentOnly').addEventListener('change',e=>{
+     const branch=state.config.branches.filledComment;
+     branch.groupBy=e.target.checked?['comment']:['comment','square'];
+     // Replace the singular variable when enabling merge mode; never discard a custom mask.
+     if(e.target.checked&&branch.template.includes('{square}')&&!branch.template.includes('{squares}')){
+       branch.template=branch.template.replaceAll('{square}','{squares}');
+       $('filledMask').value=branch.template;
+     }
+     updateFilledGroupHint();changed();
+   });
    $('groupSeparator').addEventListener('change',e=>{state.config.output.groupSeparator=({double:'\n\n',single:'\n',semicolon:'; '})[e.target.value]||'\n\n';changed();});
    $('branchFirst').addEventListener('change',e=>{const f=e.target.value;state.config.branchOrder=[f,f==='emptyComment'?'filledComment':'emptyComment'];changed();});
    $('groupsList').addEventListener('input',e=>{

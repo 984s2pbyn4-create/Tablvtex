@@ -30,6 +30,10 @@
    if(obj.branchOrder.length!==2)obj.branchOrder=d.branchOrder;
    if(!Array.isArray(obj.groupOrder))obj.groupOrder=[];
    if(!Array.isArray(obj.filters.rules))obj.filters.rules=[];
+   // Compatibility: old templates used a comment+square key; new templates may use comment only.
+   const groupBy=obj.branches.filledComment.groupBy;
+   obj.branches.filledComment.groupBy=Array.isArray(groupBy)&&groupBy.includes('comment')&&groupBy.every(k=>k==='comment'||k==='square')
+      ? (groupBy.includes('square')?['comment','square']:['comment']) : ['comment','square'];
    return obj;
  }
  function normalizeValue(value,config){let s=String(value??'');if(config.trim!==false)s=s.trim();if(config.collapseSpaces!==false)s=s.replace(/\s+/g,' ');return s;}
@@ -96,13 +100,17 @@
        if(!branchRows.length)continue;
        const buckets=new Map();
        for(const r of branchRows){
-         const k=branchName==='emptyComment'?keyFor(r.locality,cfg):JSON.stringify([keyFor(r.cleanComment,cfg),keyFor(r.square,cfg)]);
-         if(!buckets.has(k))buckets.set(k,{label:branchName==='emptyComment'?r.locality:`${r.cleanComment} ${r.square}`,rows:[]});
+         const bySquare=branchName==='filledComment'&&branch.groupBy.includes('square');
+         const k=branchName==='emptyComment'?keyFor(r.locality,cfg):JSON.stringify(bySquare?[keyFor(r.cleanComment,cfg),keyFor(r.square,cfg)]:[keyFor(r.cleanComment,cfg)]);
+         if(!buckets.has(k))buckets.set(k,{label:branchName==='emptyComment'?r.locality:(bySquare?`${r.cleanComment} ${r.square}`:r.cleanComment),rows:[]});
          buckets.get(k).rows.push(r);
        }
        const items=[];
        for(const bucket of sortedBuckets(buckets.values(),branch.sort)){
          const rr=bucket.rows,ids=stableUnique(rr.map(r=>r.targetId)),squares=stableUnique(rr.map(r=>r.square)),types=stableUnique(rr.map(r=>r.targetType));
+         if(branchName==='filledComment'&&!branch.groupBy.includes('square')&&squares.length>1&&branch.template.includes('{square}')){
+           issues.push({severity:'warning',code:'SINGULAR_SQUARE_IN_MERGED_GROUP',message:`Группа «${gk}»: в объединённой ветке Б несколько квадратов, но маска содержит {square}. Используйте {squares}, чтобы вывести их все.`});
+         }
          const common={groupKey:gk,prefix:'',locality:firstBy(rr,'locality'),comment:firstBy(rr,'cleanComment'),square:firstBy(rr,'square'),squares:squares.join(cfg.output.valueSeparator),targetId:ids[0]||'',targetIds:ids.join(cfg.output.valueSeparator),targetType:types[0]||'',targetTypes:types.join(cfg.output.valueSeparator),targetPrefix:cfg.output.targetPrefix};
          const s=interpolate(branch.template,common);if(s){items.push(s);stats.items++;}
          if(ids.length<rr.length)issues.push({severity:'info',code:'DUPLICATE_ID',message:`Группа «${gk}»: повторяющиеся идентификаторы объединены.`});
