@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0a101b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ТекстФорма">
+  <meta name="description" content="Автономный конструктор текстовых документов из Excel по пользовательским шаблонам">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <link rel="stylesheet" href="./styles.css">
+  <title>ТекстФорма · Конструктор документов</title>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark"><span>TF</span></span><span class="brand-name">ТЕКСТ<span class="accent">ФОРМА</span><small>КОНСТРУКТОР ДОКУМЕНТОВ</small></span></div>
+    <div class="top-actions"><span class="status-pill" id="networkState"><i class="dot"></i><span>Проверка подключения</span></span><button class="btn btn-quiet btn-sm" id="helpButton" title="Инструкция">ⓘ <span class="desktop-only">Помощь</span></button></div>
+  </header>
+  <div class="workspace">
+    <nav class="sidebar" aria-label="Разделы приложения">
+      <div class="side-label">РАБОЧИЙ ПРОЦЕСС</div>
+      <button class="nav-link active" data-view="import"><span class="nav-number">01</span><span>Источник данных</span></button>
+      <button class="nav-link" data-view="mapping"><span class="nav-number">02</span><span>Сопоставление</span></button>
+      <button class="nav-link" data-view="filters"><span class="nav-number">03</span><span>Фильтры</span></button>
+      <button class="nav-link" data-view="groups"><span class="nav-number">04</span><span>Группы и порядок</span></button>
+      <button class="nav-link" data-view="branches"><span class="nav-number">05</span><span>Ветки и маски</span></button>
+      <button class="nav-link" data-view="templates"><span class="nav-number">06</span><span>Мои шаблоны</span></button>
+      <div class="sidebar-bottom"><span class="sidebar-caption">ДАННЫЕ ОСТАЮТСЯ НА УСТРОЙСТВЕ</span><div class="mini-version">v1.0 · PWA OFFLINE</div></div>
+    </nav>
+    <main class="main-content">
+      <section class="view active" id="view-import">
+        <div class="eyebrow">ШАГ 01 / ИСТОЧНИК ДАННЫХ</div><h1>Начните с таблицы</h1><p class="lead">Загрузите Excel-файл или текстовую таблицу. Данные обрабатываются на этом устройстве, даже без подключения к сети.</p>
+        <label class="upload-zone" for="fileInput" id="dropZone"><span class="upload-icon">↥</span><strong>Выберите файл или перетащите сюда</strong><span>XLSX · XLSM · CSV · TSV</span><span class="upload-hint">Файл не передаётся на сервер</span></label>
+        <input id="fileInput" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.xls" hidden>
+        <div class="upload-meta" id="fileMeta" hidden><span class="meta-icon">▤</span><div><strong id="fileName"></strong><small id="fileDetails"></small></div><button class="btn btn-quiet btn-sm" id="clearFile">Удалить</button></div>
+        <div class="card"><div class="card-top"><h2>Параметры импорта</h2><span class="tiny-tag">ИСТОЧНИК</span></div><div class="field-grid"><label class="field"><span>Лист таблицы</span><select id="sheetSelect" disabled><option value="0">Сначала загрузите файл</option></select></label><label class="field"><span>Номер строки с заголовками</span><input id="headerRowInput" type="number" min="1" max="10000" value="1" inputmode="numeric"></label></div><label class="toggle-row"><input type="checkbox" id="persistSession"><span><strong>Хранить загруженную таблицу на устройстве</strong><small>Для повторного открытия приложения без выбора файла. Данные можно удалить.</small></span></label></div>
+        <div class="card"><div class="card-top"><h2>Предпросмотр исходных данных</h2><span id="tableSize" class="tiny-tag">НЕТ ДАННЫХ</span></div><div class="table-scroll" id="sourcePreview"><div class="empty-state">Здесь появятся столбцы и первые строки таблицы.</div></div></div>
+      </section>
+      <section class="view" id="view-mapping">
+        <div class="eyebrow">ШАГ 02 / СТРУКТУРА</div><h1>Сопоставление столбцов</h1><p class="lead">Укажите, какие столбцы таблицы выполняют нужные роли. Названия и расположение столбцов могут быть любыми.</p>
+        <div class="card"><div class="card-top"><h2>Роли данных</h2><span class="tiny-tag">6 ПОЛЕЙ</span></div><div id="mappingFields" class="mapping-list"></div><div class="inline-note">Сопоставление сохраняется вместе с шаблоном. При смене файла проверьте выбранные столбцы.</div></div>
+        <div class="card"><div class="card-top"><h2>Подготовка значений</h2></div><label class="toggle-row"><input type="checkbox" id="normTrim" checked><span><strong>Удалять пробелы по краям</strong><small>Не затрагивает содержимое между словами.</small></span></label><label class="toggle-row"><input type="checkbox" id="normCollapse" checked><span><strong>Убирать повторяющиеся пробелы</strong><small>Приводит несколько пробелов и переносов к одному.</small></span></label><label class="toggle-row"><input type="checkbox" id="normCase"><span><strong>Не учитывать регистр при группировке</strong><small>Исходное написание в результате сохраняется.</small></span></label></div>
+      </section>
+      <section class="view" id="view-filters">
+        <div class="eyebrow">ШАГ 03 / ОТБОР</div><h1>Фильтры записей</h1><p class="lead">Создавайте условия отбора по любым исходным столбцам, включая те, которым не назначена специальная роль.</p>
+        <div class="card"><div class="card-top"><h2>Логика условий</h2><button id="addFilter" class="btn btn-secondary btn-sm">＋ Добавить условие</button></div><label class="field"><span>Объединять условия</span><select id="filterMode"><option value="all">И: должны выполняться все</option><option value="any">ИЛИ: достаточно одного</option></select></label><div id="filterList" class="filter-list"></div><div class="inline-note">Если условий нет, обрабатываются все непустые строки.</div></div>
+      </section>
+      <section class="view" id="view-groups">
+        <div class="eyebrow">ШАГ 04 / ГРУППИРОВКА</div><h1>Группы и порядок</h1><p class="lead">Каждая группа создаёт отдельный абзац. Шаблон заголовка можно переопределить для любой группы.</p>
+        <div class="card"><div class="card-top"><h2>Общие настройки</h2></div><label class="field"><span>Маска заголовка группы</span><input id="groupHeader" spellcheck="false" placeholder="{prefix} {groupKey}"></label><label class="field"><span>Общий текстовый префикс</span><input id="defaultPrefix" placeholder="Задаётся пользователем"></label><label class="field"><span>Порядок групп</span><select id="groupSort"><option value="source">Как в исходной таблице</option><option value="manual">Вручную, кнопками ↑ ↓</option><option value="alphaAsc">По алфавиту (А → Я)</option><option value="alphaDesc">По алфавиту (Я → А)</option></select></label></div>
+        <div class="card"><div class="card-top"><h2>Обнаруженные группы</h2><span id="groupCount" class="tiny-tag">0</span></div><div id="groupsList" class="group-list"><div class="empty-state">Загрузите таблицу и назначьте ключ группировки.</div></div></div>
+      </section>
+      <section class="view" id="view-branches">
+        <div class="eyebrow">ШАГ 05 / ФОРМИРОВАНИЕ</div><h1>Ветки и маски</h1><p class="lead">Задавайте текст, переменные, правила очистки, разделители и порядок. Пустые ветки не включаются в результат.</p>
+        <div class="card"><div class="card-top"><h2>Ветка А: комментарий пустой</h2><label class="switch"><input id="emptyEnabled" type="checkbox" checked><span></span></label></div><p class="card-description">Группировка по населённому пункту. Уникальные квадраты и идентификаторы.</p><label class="field"><span>Текстовая маска</span><textarea id="emptyMask" rows="3" spellcheck="false"></textarea></label><div class="field-grid"><label class="field"><span>Разделитель элементов</span><input id="emptySeparator"></label><label class="field"><span>Порядок элементов</span><select id="emptySort"><option value="source">Исходный</option><option value="alphaAsc">По возрастанию</option><option value="alphaDesc">По убыванию</option></select></label></div></div>
+        <div class="card"><div class="card-top"><h2>Ветка Б: комментарий заполнен</h2><label class="switch"><input id="filledEnabled" type="checkbox" checked><span></span></label></div><p class="card-description">Группировка по очищенному комментарию и квадрату. Населённый пункт не выводится.</p><label class="field"><span>Текстовая маска</span><textarea id="filledMask" rows="3" spellcheck="false"></textarea></label><label class="field"><span>Служебный префикс для удаления в начале комментария</span><input id="stripPrefix" placeholder="Оставьте пустым, если не требуется"></label><div class="field-grid"><label class="field"><span>Разделитель элементов</span><input id="filledSeparator"></label><label class="field"><span>Порядок элементов</span><select id="filledSort"><option value="source">Исходный</option><option value="alphaAsc">По возрастанию</option><option value="alphaDesc">По убыванию</option></select></label></div></div>
+        <div class="card"><div class="card-top"><h2>Порядок веток и вывод</h2></div><label class="field"><span>Какая ветка идёт первой</span><select id="branchFirst"><option value="emptyComment">Сначала ветка А</option><option value="filledComment">Сначала ветка Б</option></select></label><div class="field-grid"><label class="field"><span>Префикс идентификатора</span><input id="targetPrefix"></label><label class="field"><span>Разделитель значений</span><input id="valueSeparator"></label><label class="field"><span>Между ветками</span><input id="branchSeparator"></label><label class="field"><span>Между группами</span><select id="groupSeparator"><option value="double">Пустая строка</option><option value="single">Новая строка</option><option value="semicolon">Точка с запятой</option></select></label></div><div class="token-list"><span>Доступные переменные</span><div id="tokenChips"></div></div></div>
+      </section>
+      <section class="view" id="view-templates">
+        <div class="eyebrow">ШАГ 06 / СОХРАНЕНИЕ</div><h1>Библиотека шаблонов</h1><p class="lead">Шаблоны остаются на устройстве. Экспортируйте JSON для резервной копии или переноса на другой iPad.</p>
+        <div class="card"><div class="card-top"><h2>Текущий шаблон</h2></div><label class="field"><span>Название шаблона</span><input id="templateName" placeholder="Введите название"></label><div class="button-row"><button class="btn btn-primary" id="saveTemplate">Сохранить в библиотеку</button><button class="btn btn-secondary" id="exportTemplate">↓ Скачать JSON</button></div><label class="btn btn-secondary import-template" for="templateInput">↑ Импортировать JSON</label><input id="templateInput" type="file" accept=".json,application/json" hidden></div>
+        <div class="card"><div class="card-top"><h2>Сохранённые шаблоны</h2><span id="templateCount" class="tiny-tag">0</span></div><div id="savedTemplates"><div class="empty-state">Пока нет сохранённых шаблонов.</div></div></div>
+        <div class="card card-warn"><div class="card-top"><h2>Локальные данные</h2></div><p class="card-description">На iPad система может удалить данные сайта при нехватке места. Для надёжного хранения сохраняйте JSON-шаблоны и документы в приложение «Файлы».</p><button id="deleteLocal" class="btn btn-danger-outline">Очистить сохранённую таблицу и черновик</button></div>
+      </section>
+    </main>
+    <aside class="preview-panel" aria-label="Результат">
+      <div class="preview-header"><div class="eyebrow">ЖИВОЙ РЕЗУЛЬТАТ</div><div class="preview-title-row"><h2>Документ</h2><span id="renderBadge" class="render-badge">ОЖИДАНИЕ</span></div></div>
+      <div class="preview-metrics"><div><strong id="statRead">0</strong><span>строк</span></div><div><strong id="statGroups">0</strong><span>групп</span></div><div><strong id="statIssues">0</strong><span>замечаний</span></div></div>
+      <div class="preview-tabs"><button id="tabPreview" class="preview-tab active">Предпросмотр</button><button id="tabEdit" class="preview-tab">Ручная правка <span id="editDot" hidden>●</span></button></div>
+      <div class="preview-scroll" id="previewScroll"><div id="renderedText" class="result-text empty-result">Загрузите таблицу и сопоставьте столбцы, чтобы увидеть результат.</div><textarea id="manualText" class="manual-text" hidden spellcheck="true" aria-label="Редактируемый документ" placeholder="Текст появится после формирования документа."></textarea></div>
+      <div class="review-area"><div class="review-heading"><strong>Проверка данных</strong><span id="warningCount">0</span></div><div class="review-list" id="warningsList"><p class="subtle">Замечания появятся здесь.</p></div></div>
+      <div class="preview-footer"><div class="draft-line" id="draftLine">Экспортирует автоматически сформированный текст</div><div class="button-row export-actions"><button id="regenerateButton" class="btn btn-secondary btn-icon" title="Восстановить автоматический текст">↻</button><button id="exportTxt" class="btn btn-secondary" disabled>↓ TXT</button><button id="exportDocx" class="btn btn-primary" disabled>↓ DOCX</button></div></div>
+    </aside>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <dialog id="helpDialog" class="help-dialog"><div class="modal-title"><h2>Как пользоваться</h2><button id="closeHelp" class="btn btn-quiet btn-sm">✕</button></div><ol><li>Загрузите XLSX, XLSM, CSV или TSV.</li><li>Укажите исходный лист и строку заголовков.</li><li>Сопоставьте шесть ролей со столбцами.</li><li>При необходимости настройте фильтры, порядок групп и маски.</li><li>Проверьте результат справа. Для ручной правки откройте соответствующую вкладку.</li><li>Экспортируйте TXT, DOCX или сохраните JSON-шаблон.</li></ol><p>Для автономного использования откройте сайт в Safari при интернете, дождитесь сообщения «Автономный режим готов», затем выберите «Поделиться → На экран „Домой“». Все основные файлы приложения кешируются локально.</p><p>Поддерживается современный формат Excel. Устаревший двоичный .xls нужно предварительно сохранить как .xlsx или CSV. Файлы с паролем не открываются.</p></dialog>
+</div>
+<script src="./zip.js"></script><script src="./excel.js"></script><script src="./docx.js"></script><script src="./db.js"></script><script src="./engine.js"></script><script src="./app.js"></script>
+</body>
+</html>
